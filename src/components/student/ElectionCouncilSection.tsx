@@ -31,7 +31,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 export const ElectionCouncilSection: React.FC = () => {
-  const { user, addNotification } = useAuth();
+  const { user, addNotification, switchCouncilMember } = useAuth();
 
   const [members, setMembers] = useState<ElectionMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<ElectionMember | null>(null);

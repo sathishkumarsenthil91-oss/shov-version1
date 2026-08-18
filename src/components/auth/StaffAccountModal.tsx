@@ -16,6 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { UserRole, DepartmentCode, StaffAccountPayload } from '../../types';
+import { ALL_COLLEGE_DEPARTMENTS } from '../../data/departmentsData';
 
 interface StaffAccountModalProps {
   isOpen: boolean;
@@ -158,26 +159,22 @@ export const StaffAccountModal: React.FC<StaffAccountModalProps> = ({
             {role !== 'VICE_PRINCIPAL' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Assigned Department (IT, CSE, AIDS)
+                  Assigned Department (All Colleges & Disciplines)
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { code: 'IT', label: 'Information Tech', icon: <Layers className="w-3.5 h-3.5 text-sky-500" /> },
-                    { code: 'CSE', label: 'Comp Science', icon: <Cpu className="w-3.5 h-3.5 text-blue-500" /> },
-                    { code: 'AIDS', label: 'AI & Data Sci', icon: <Database className="w-3.5 h-3.5 text-indigo-500" /> }
-                  ].map((dept) => (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  {ALL_COLLEGE_DEPARTMENTS.map((dept) => (
                     <button
                       type="button"
                       key={dept.code}
                       onClick={() => setDepartmentCode(dept.code as DepartmentCode)}
-                      className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      className={`py-2 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
                         departmentCode === dept.code
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 shadow-sm'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700'
                       }`}
                     >
-                      {dept.icon}
-                      <span>{dept.code}</span>
+                      <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="truncate max-w-full">{dept.code}</span>
                     </button>
                   ))}
                 </div>

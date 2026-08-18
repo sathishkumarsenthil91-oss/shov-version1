@@ -5,6 +5,7 @@ import { INITIAL_STUDENTS } from '../../data/mockData';
 import { ImageLightbox } from '../common/ImageLightbox';
 import { LiveCameraCaptureModal } from '../common/LiveCameraCaptureModal';
 import { LiveQrScannerModal } from '../common/LiveQrScannerModal';
+import { LiveVerificationModal } from './LiveVerificationModal';
 import { soundManager } from '../../utils/audio';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -47,6 +48,7 @@ export const StaffScanner: React.FC = () => {
     student?: Partial<Student>;
     message: string;
   } | null>(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   // Live Camera Feed Overlay State
   const [isPreviewCameraActive, setIsPreviewCameraActive] = useState(true);
@@ -164,8 +166,26 @@ export const StaffScanner: React.FC = () => {
 
     const res = await verifyQrTokenApi(finalToken, 'u-staff-1', location, thumb);
 
+    // Save to Supabase gate_scans table asynchronously
+    if (res.student) {
+      import('../../services/campusSupabaseService').then(({ logGateScanToSupabase }) => {
+        logGateScanToSupabase({
+          registerNumber: res.student?.registerNumber || 'UNKNOWN',
+          studentName: res.student?.name || 'Campus Student',
+          departmentName: res.student?.department,
+          studentPhotoUrl: res.student?.photoUrl,
+          capturedThumbnailUrl: thumb,
+          verifierName: 'Main Gate Staff Officer',
+          result: res.status,
+          location,
+          notes: res.message
+        }).catch(err => console.warn('Supabase scan sync:', err));
+      });
+    }
+
     setIsVerifying(false);
     setScanResult(res);
+    setShowVerificationModal(true);
 
     // Sensory feedback
     if (res.valid) {
@@ -190,14 +210,16 @@ export const StaffScanner: React.FC = () => {
       setFacialMatchScore(score);
 
       const isValid = student.status === 'ACTIVE';
-      setScanResult({
+      const scanOutcome = {
         valid: isValid,
         status: student.status,
         student,
         message: isValid 
           ? `Biometric Facial Recognition Matched (${score}% Confidence). Digital ID Authorized.` 
           : `Facial Biometrics Matched (${score}% Confidence). WARNING: Student ID is ${student.status}!`
-      });
+      };
+      setScanResult(scanOutcome);
+      setShowVerificationModal(true);
 
       if (isValid) {
         soundManager.playSuccessBeep();
@@ -873,6 +895,13 @@ export const StaffScanner: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setShowVerificationModal(true)}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Scan className="w-3.5 h-3.5" />
+                <span>View Full Live Pass</span>
+              </button>
+              <button
                 onClick={() => setScanResult(null)}
                 className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-300 dark:hover:bg-slate-700 transition-all cursor-pointer"
               >
@@ -883,6 +912,19 @@ export const StaffScanner: React.FC = () => {
         )}
 
       </div>
+
+      {/* Pop-up Live Verification Screen (Faithful match with reference design) */}
+      <LiveVerificationModal
+        isOpen={showVerificationModal && !!scanResult}
+        onClose={() => setShowVerificationModal(false)}
+        student={scanResult?.student}
+        isValid={!!scanResult?.valid}
+        status={scanResult?.status || 'ACTIVE'}
+        onScanAnother={() => {
+          setShowVerificationModal(false);
+          setShowLiveQrModal(true);
+        }}
+      />
 
     </div>
   );

@@ -1,70 +1,92 @@
 import React, { useState } from 'react';
 import { Student } from '../../types';
-import { ShovLogo } from '../common/ShovLogo';
 import { ImageLightbox } from '../common/ImageLightbox';
 import { LiveCameraCaptureModal } from '../common/LiveCameraCaptureModal';
 import { motion } from 'motion/react';
+import { rohitKumarPhoto, avsCampusPhoto, INITIAL_STUDENTS } from '../../data/mockData';
 import { 
   ShieldCheck, 
-  QrCode, 
   RotateCw, 
-  Download, 
-  Share2, 
-  AlertTriangle, 
   CheckCircle2, 
-  Lock,
   Building2,
   Calendar,
   Sparkles,
   Maximize2,
-  Camera
+  Camera,
+  Mail,
+  Phone,
+  User,
+  GraduationCap,
+  Cake,
+  AlertTriangle,
+  QrCode,
+  Wifi,
+  Fingerprint,
+  PhoneCall,
+  Globe
 } from 'lucide-react';
 
 interface DigitalIDCardProps {
-  student: Student;
+  student?: Student;
   onReportLost?: () => void;
   onPhotoUpdated?: (newPhotoUrl: string) => void;
+  onOpenDepartmentPrompt?: () => void;
+  customDepartmentName?: string;
 }
 
-export const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, onReportLost, onPhotoUpdated }) => {
+export const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ 
+  student = INITIAL_STUDENTS[0], 
+  onReportLost, 
+  onPhotoUpdated,
+  onOpenDepartmentPrompt,
+  customDepartmentName
+}) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [copiedToken, setCopiedToken] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isCampusLightboxOpen, setIsCampusLightboxOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
 
-  const statusColors: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-    ACTIVE: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/30', dot: 'bg-emerald-500' },
-    INACTIVE: { bg: 'bg-slate-500/10', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-500/30', dot: 'bg-slate-500' },
-    SUSPENDED: { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/30', dot: 'bg-amber-500' },
-    BANNED: { bg: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-500/30', dot: 'bg-rose-500' },
-    EXPIRED: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-500/30', dot: 'bg-purple-500' },
-  };
-
-  const statusBadge = statusColors[student.status] || statusColors.ACTIVE;
-
-  const handleCopyToken = () => {
-    navigator.clipboard.writeText(student.qrSecureToken);
-    setCopiedToken(true);
-    setTimeout(() => setCopiedToken(false), 2000);
-  };
+  const displayDept = customDepartmentName || student.departmentName || 'Computer Science';
+  const photoToUse = student.photoUrl || rohitKumarPhoto;
 
   return (
-    <div className="w-full max-w-md mx-auto select-none">
+    <div className="w-full max-w-2xl mx-auto select-none space-y-4">
       
-      {/* Lightbox Modal */}
+      {/* Lightbox Modal for Student Photo */}
       <ImageLightbox
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
-        photoUrl={student.photoUrl}
+        photoUrl={photoToUse}
         title={student.name}
-        subtitle={`REG: ${student.registerNumber} | ID: ${student.studentIdNumber}`}
-        badge={student.departmentName}
+        subtitle={`REG: ${student.registerNumber} | ID: ${student.studentIdNumber || 'STU-10001'}`}
+        badge="AVS College of Technology"
         status={student.status}
         details={[
           { label: 'Register Number', value: student.registerNumber },
-          { label: 'Course & Year', value: `${student.course} (${student.year} Yr)` },
-          { label: 'Blood Group', value: student.bloodGroup || 'O+' },
-          { label: 'College Email', value: student.collegeEmail }
+          { label: 'Department', value: displayDept },
+          { label: 'Course & Year', value: `${student.course || 'B.E. Computer Science'} (${student.year || 3}rd Year)` },
+          { label: 'Date of Birth', value: student.dateOfBirth || '15-06-2004' },
+          { label: 'College Email', value: student.collegeEmail || 'rohit.kumar@avsct.edu.in' },
+          { label: 'Phone', value: student.phoneNumber || '98765 43210' },
+          { label: 'Valid Until', value: student.validUntil || '31-05-2027' }
+        ]}
+      />
+
+      {/* Lightbox Modal for Campus Photo */}
+      <ImageLightbox
+        isOpen={isCampusLightboxOpen}
+        onClose={() => setIsCampusLightboxOpen(false)}
+        photoUrl={avsCampusPhoto}
+        title="AVS College of Technology"
+        subtitle="Main Academic Campus & Administrative Block"
+        badge="Approved by AICTE • Anna University Affiliated"
+        status="ACTIVE"
+        details={[
+          { label: 'Campus Name', value: 'AVS College of Technology' },
+          { label: 'Counselling Code', value: '6107' },
+          { label: 'Location', value: 'Salem, Tamil Nadu, India' },
+          { label: 'Affiliation', value: 'Anna University, Chennai' },
+          { label: 'Accreditation', value: 'AICTE Approved | NAAC Grade A+' }
         ]}
       />
 
@@ -76,203 +98,409 @@ export const DigitalIDCard: React.FC<DigitalIDCardProps> = ({ student, onReportL
           onPhotoUpdated?.(newPhoto);
         }}
         title="Student Photo Capture"
-        subtitle={`Take new biometric photo for ${student.name} (${student.registerNumber})`}
+        subtitle={`Update biometric photo for ${student.name} (${student.registerNumber})`}
       />
 
-      {/* Flip Control Toggle */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-blue-500" />
-          OFFICIAL COLLEGE DIGITAL ID
-        </span>
-        <button
-          onClick={() => setIsFlipped(!isFlipped)}
-          className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-        >
-          <RotateCw className="w-3.5 h-3.5" />
-          <span>{isFlipped ? 'View Front' : 'View Back & QR'}</span>
-        </button>
+      {/* Top Bar Controls */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+          <span className="text-xs font-black text-slate-800 dark:text-slate-200 tracking-wider uppercase flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            AVS COLLEGE OF TECHNOLOGY — OFFICIAL DIGITAL ID
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsCampusLightboxOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            title="View AVS Campus Building Photo"
+          >
+            <Building2 className="w-3.5 h-3.5 text-blue-500" />
+            <span className="hidden sm:inline">View Campus</span>
+          </button>
+          <button
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            <span>{isFlipped ? 'Show Front' : 'Show Back (Instructions & QR)'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* 3D ID CARD CONTAINER */}
-      <div className="relative w-full aspect-[1/1.55] sm:aspect-[1/1.5] perspective-1000">
+      {/* 3D FLIP CONTAINER */}
+      <div className="relative w-full aspect-[1.58/1] perspective-1000">
         <motion.div
           animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
           className="w-full h-full relative transform-style-3d shadow-2xl rounded-3xl"
         >
           
-          {/* FRONT SIDE OF ID CARD */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white border border-blue-500/30 p-6 flex flex-col justify-between backface-hidden shadow-2xl">
+          {/* ========================================================= */}
+          {/* CARD FRONT SIDE (With AVS College Campus Background)       */}
+          {/* ========================================================= */}
+          <div className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden bg-white text-slate-900 border-2 border-slate-200/90 flex flex-col justify-between backface-hidden shadow-2xl p-5 sm:p-6 select-text relative">
             
-            {/* Hologram & Grid Overlay Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
-            <div className="absolute -top-24 -right-24 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+            {/* AVS Campus Building Background Texture & Watermark */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.14] mix-blend-multiply select-none z-0">
+              <img
+                src={avsCampusPhoto}
+                alt="AVS College Campus Background"
+                className="w-full h-full object-cover filter contrast-125 saturate-120"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/10 via-transparent to-white/40" />
+            </div>
 
-            {/* Header: Logo & College Name */}
-            <div>
-              <div className="flex items-center justify-between border-b border-blue-500/20 pb-3">
-                <div className="flex items-center gap-2">
-                  <ShovLogo size="sm" showTagline={false} lightText={true} />
+            {/* 1. CARD TOP HEADER */}
+            <div className="relative z-10 flex items-start justify-between border-b border-slate-200/80 pb-3">
+              {/* Left Brand: SHOV Logo */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white p-1.5 flex items-center justify-center shadow-md">
+                  <ShieldCheck className="w-6 h-6 text-sky-300" />
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-bold block">
-                    ID: {student.studentIdNumber}
-                  </span>
-                  <div className={`mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border} text-[10px] font-black uppercase`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot} animate-pulse`} />
-                    {student.status}
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-black tracking-tight text-blue-950">SHOV</span>
+                    <span className="text-[10px] font-extrabold tracking-widest text-slate-500 uppercase">— DIGITAL ID —</span>
                   </div>
+                  <p className="text-[8px] font-bold text-slate-500 tracking-wider uppercase">
+                    VERIFY • IDENTIFY • SECURE
+                  </p>
                 </div>
+              </div>
+
+              {/* Right: College Name & Accreditations */}
+              <div className="text-right">
+                <h1 className="text-sm sm:text-base font-black text-blue-950 tracking-tight uppercase leading-tight">
+                  AVS COLLEGE<br className="sm:hidden" /> OF TECHNOLOGY
+                </h1>
+                <p className="text-[9px] font-semibold text-slate-500">
+                  Approved by AICTE | Affiliated to Anna University
+                </p>
               </div>
             </div>
 
-            {/* Middle: Student Photo & Core Particulars */}
-            <div className="my-auto py-4 flex flex-col items-center text-center">
-              {/* Photo Frame with Security Hologram Border & Quick Camera Capture */}
-              <div className="relative mb-3 flex items-center justify-center">
-                <div 
-                  className="relative cursor-pointer group" 
-                  onClick={() => setIsLightboxOpen(true)}
-                  title="Tap to view HD photo"
-                >
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden ring-4 ring-blue-500/40 shadow-2xl transition-transform duration-300 group-hover:scale-105">
+            {/* 2. CARD MIDDLE PARTICULARS & PHOTO */}
+            <div className="relative z-10 my-auto py-2 grid grid-cols-12 gap-4 items-center">
+              
+              {/* Left Column: Photo & Name */}
+              <div className="col-span-4 flex flex-col items-center text-center space-y-1.5">
+                <div className="relative group">
+                  <div 
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="w-24 h-28 sm:w-28 sm:h-32 rounded-2xl overflow-hidden ring-3 ring-blue-950/20 shadow-lg cursor-pointer transition-transform group-hover:scale-105 bg-white"
+                  >
                     <img
-                      src={student.photoUrl}
+                      src={photoToUse}
                       alt={student.name}
                       className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold gap-1 rounded-2xl">
-                      <Maximize2 className="w-4 h-4" />
-                      <span>HD View</span>
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-bold gap-1 rounded-2xl">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>HD</span>
                     </div>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-blue-600 text-white shadow-lg border-2 border-slate-900">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
+
+                  {onPhotoUpdated && (
+                    <button
+                      onClick={() => setIsCameraCaptureOpen(true)}
+                      className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-all cursor-pointer"
+                      title="Update Live Photo"
+                    >
+                      <Camera className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
 
-                {onPhotoUpdated && (
-                  <button
-                    onClick={() => setIsCameraCaptureOpen(true)}
-                    className="absolute -top-2 -right-2 p-2 rounded-full bg-slate-900/90 hover:bg-blue-600 text-cyan-400 hover:text-white border border-blue-500/40 shadow-xl transition-all cursor-pointer group/cam"
-                    title="Take Live Camera ID Photo"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span className="sr-only">Live Photo Capture</span>
-                  </button>
-                )}
+                <h2 className="text-sm sm:text-base font-black text-blue-950 tracking-tight leading-tight">
+                  {student.name || 'Rohit Kumar'}
+                </h2>
               </div>
 
-              {/* Name */}
-              <h2 className="text-xl font-black text-white tracking-tight">{student.name}</h2>
-              <p className="text-xs font-mono font-bold text-blue-400 mt-0.5 tracking-wider">
-                REGISTER NO: {student.registerNumber}
-              </p>
-
-              {/* Department & Course Pills */}
-              <div className="mt-3 space-y-1 w-full max-w-xs">
-                <div className="p-2 rounded-xl bg-blue-900/40 border border-blue-500/20 text-xs font-medium text-slate-200">
-                  <p className="text-[10px] uppercase font-bold text-blue-400 tracking-wider">Department</p>
-                  <p className="font-semibold text-white truncate">{student.departmentName}</p>
+              {/* Middle/Right Column: Metadata Table */}
+              <div className="col-span-8 space-y-1.5">
+                
+                {/* Student ID Badge */}
+                <div className="flex items-center justify-end gap-2 mb-1">
+                  <div className="px-3 py-0.5 rounded-md bg-blue-950 text-white text-[10px] font-black uppercase tracking-wider">
+                    STUDENT ID
+                  </div>
+                  <span className="text-sm sm:text-base font-black text-blue-950 font-mono tracking-tight">
+                    {student.studentIdNumber || 'STU-10001'}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-left">
-                  <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs">
-                    <p className="text-[9px] uppercase font-bold text-slate-400">Course / Year</p>
-                    <p className="font-semibold text-slate-100">{student.course} ({student.year} Yr)</p>
+                {/* Particulars with blue circle bullet icons */}
+                <div className="space-y-1 text-[11px] sm:text-xs text-slate-800 font-medium">
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <User className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Register No</span>
+                    <span className="font-bold text-blue-950 font-mono">: {student.registerNumber || '23CS001'}</span>
                   </div>
-                  <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs">
-                    <p className="text-[9px] uppercase font-bold text-slate-400">Valid Until</p>
-                    <p className="font-semibold text-emerald-400">{student.validUntil}</p>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Building2 className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Department</span>
+                    <span 
+                      onClick={onOpenDepartmentPrompt}
+                      className={`font-bold text-blue-950 truncate ${onOpenDepartmentPrompt ? 'cursor-pointer hover:underline' : ''}`}
+                    >
+                      : {displayDept}
+                    </span>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <GraduationCap className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Course & Year</span>
+                    <span className="font-bold text-blue-950">: {student.course || 'B.E. Computer Science'} ({student.year || 3}rd Year)</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Cake className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Date of Birth</span>
+                    <span className="font-bold text-blue-950 font-mono">: {student.dateOfBirth || '15-06-2004'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Mail className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Email</span>
+                    <span className="font-bold text-blue-950 truncate font-mono">: {student.collegeEmail || 'rohit.kumar@avsct.edu.in'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Phone className="w-2.5 h-2.5" />
+                    </span>
+                    <span className="w-24 text-slate-600 font-semibold">Phone</span>
+                    <span className="font-bold text-blue-950 font-mono">: {student.phoneNumber || '98765 43210'}</span>
+                  </div>
+
                 </div>
+
               </div>
+
             </div>
 
-            {/* Card Footer */}
-            <div className="border-t border-blue-500/20 pt-3 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-              <span>ISSUED: {student.issuedAt}</span>
-              <span className="flex items-center gap-1 text-blue-400">
-                <Lock className="w-3 h-3" /> SECURE CHIP
-              </span>
+            {/* 3. CARD FOOTER: VALID UNTIL, STATUS & QR CODE */}
+            <div className="relative z-10 border-t border-slate-200/80 pt-2.5 flex items-end justify-between">
+              
+              {/* Left Validity & Status */}
+              <div className="space-y-1">
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider block">
+                    Valid Until
+                  </span>
+                  <span className="text-sm font-black text-blue-950 font-mono">
+                    {student.validUntil || '31-05-2027'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider">STATUS</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase shadow-xs">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>{student.status || 'ACTIVE'}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: QR Code with SHOV SECURE ID Vertical Ribbon */}
+              <div className="flex items-stretch rounded-xl border-2 border-blue-950 overflow-hidden shadow-md bg-white">
+                {/* SVG QR Code Pattern */}
+                <div className="p-1">
+                  <svg viewBox="0 0 100 100" className="w-16 h-16 sm:w-18 sm:h-18">
+                    {/* Position detection corners */}
+                    <rect x="0" y="0" width="30" height="30" fill="#0f172a" rx="3" />
+                    <rect x="5" y="5" width="20" height="20" fill="#ffffff" rx="1.5" />
+                    <rect x="10" y="10" width="10" height="10" fill="#1e3a8a" rx="1" />
+
+                    <rect x="70" y="0" width="30" height="30" fill="#0f172a" rx="3" />
+                    <rect x="75" y="5" width="20" height="20" fill="#ffffff" rx="1.5" />
+                    <rect x="80" y="10" width="10" height="10" fill="#1e3a8a" rx="1" />
+
+                    <rect x="0" y="70" width="30" height="30" fill="#0f172a" rx="3" />
+                    <rect x="5" y="75" width="20" height="20" fill="#ffffff" rx="1.5" />
+                    <rect x="10" y="80" width="10" height="10" fill="#1e3a8a" rx="1" />
+
+                    {/* QR Matrix Elements */}
+                    <path d="M 35 5 H 45 V 15 H 35 Z M 50 5 H 65 V 15 H 50 Z M 35 20 H 50 V 30 H 35 Z" fill="#0f172a" />
+                    <path d="M 5 35 H 15 V 45 H 5 Z M 20 35 H 30 V 45 H 20 Z M 35 35 H 45 V 45 H 35 Z M 50 35 H 60 V 45 H 50 Z M 65 35 H 95 V 45 H 65 Z" fill="#0f172a" />
+                    <path d="M 5 50 H 25 V 60 H 5 Z M 30 50 H 40 V 60 H 30 Z M 45 50 H 65 V 60 H 45 Z M 70 50 H 95 V 60 H 70 Z" fill="#0f172a" />
+                    <path d="M 35 70 H 45 V 80 H 35 Z M 50 70 H 65 V 80 H 50 Z M 70 70 H 80 V 80 H 70 Z M 85 70 H 95 V 80 H 85 Z" fill="#0f172a" />
+                    <path d="M 35 85 H 50 V 95 H 35 Z M 55 85 H 70 V 95 H 55 Z M 75 85 H 95 V 95 H 75 Z" fill="#0f172a" />
+                  </svg>
+                </div>
+
+                {/* Vertical Blue Strip */}
+                <div className="bg-blue-900 text-white px-1 py-1 flex items-center justify-center">
+                  <span className="text-[8px] font-black tracking-widest uppercase [writing-mode:vertical-lr] rotate-180">
+                    SHOV SECURE ID
+                  </span>
+                </div>
+              </div>
+
             </div>
 
           </div>
 
-          {/* BACK SIDE OF ID CARD (SECURE QR CODE) */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white border border-blue-500/30 p-6 flex flex-col justify-between transform-rotateY-180 backface-hidden shadow-2xl">
+          {/* ========================================================= */}
+          {/* CARD BACK SIDE (With AVS College Campus Image & Watermark) */}
+          {/* ========================================================= */}
+          <div className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden bg-white text-slate-900 border-2 border-slate-200/90 flex flex-col justify-between transform-rotateY-180 backface-hidden shadow-2xl p-5 sm:p-6 relative">
             
-            <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-white uppercase tracking-wider">SECURE QR VERIFICATION</p>
-                <p className="text-[10px] text-slate-400">Scan via Security Scanner to verify authenticity</p>
-              </div>
-              <QrCode className="w-5 h-5 text-blue-400" />
+            {/* AVS Campus Building Background Texture & Watermark */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.12] mix-blend-multiply select-none z-0">
+              <img
+                src={avsCampusPhoto}
+                alt="AVS College Campus Background"
+                className="w-full h-full object-cover filter contrast-125 saturate-120"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/10 via-transparent to-white/40" />
             </div>
 
-            {/* QR Code Graphic Center */}
-            <div className="my-auto flex flex-col items-center text-center">
-              <div className="relative p-4 rounded-2xl bg-white shadow-2xl ring-4 ring-blue-500/30 group">
+            {/* Top Brand Header */}
+            <div className="relative z-10 flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-950 text-white flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-sky-300" />
+                </div>
+                <div>
+                  <span className="text-base font-black text-blue-950 tracking-tight">SHOV</span>
+                  <span className="text-[9px] font-bold text-slate-500 ml-1.5 uppercase">— DIGITAL ID —</span>
+                  <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">
+                    VERIFY • IDENTIFY • SECURE
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className="text-[10px] font-black text-blue-950 uppercase">AVS College of Technology</p>
+                <p className="text-[8px] text-slate-500">Official Student Identity Document</p>
+              </div>
+            </div>
+
+            {/* Back Middle Section: Instructions & Campus Photo */}
+            <div className="relative z-10 my-auto py-2 grid grid-cols-12 gap-4 items-center">
+              
+              {/* Left Column: Instructions & Emergency Box */}
+              <div className="col-span-7 space-y-3 text-left">
+                <div>
+                  <h3 className="text-xs font-black text-blue-950 tracking-wider uppercase border-b border-slate-200 pb-1">
+                    INSTRUCTIONS
+                  </h3>
+                  <ul className="mt-1.5 space-y-1 text-[10px] sm:text-[11px] text-slate-700 font-medium leading-tight">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-blue-950 font-bold">•</span>
+                      <span>This ID card is the property of <strong className="text-blue-950">AVS College of Technology</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-blue-950 font-bold">•</span>
+                      <span>This card is non-transferable.</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-blue-950 font-bold">•</span>
+                      <span>Use of this card is governed by the rules and regulations of the college.</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-blue-950 font-bold">•</span>
+                      <span>If found, please return to the college office.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Principal Signature */}
+                <div className="pt-1 flex items-center justify-between">
+                  <div>
+                    <div className="h-6 flex items-end">
+                      <span className="font-serif italic font-bold text-blue-900 text-sm tracking-wide transform -rotate-6 block">
+                        J. Davis
+                      </span>
+                    </div>
+                    <div className="border-t border-slate-400 w-28 pt-0.5">
+                      <p className="text-[9px] font-black text-blue-950">Principal</p>
+                      <p className="text-[8px] text-slate-500 font-medium">AVS College of Technology</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Emergency Contact Dark Navy Box */}
+                <div className="p-2 sm:p-2.5 rounded-xl bg-blue-950 text-white space-y-0.5 shadow-sm">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-sky-300">
+                    EMERGENCY CONTACT
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono font-bold text-white">
+                    <PhoneCall className="w-3 h-3 text-sky-400" />
+                    <span>+91 12345 67890</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-slate-300">
+                    <Mail className="w-3 h-3 text-sky-400" />
+                    <span>info@avsct.edu.in</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Campus Image & RFID/NFC Fingerprint Sensor */}
+              <div className="col-span-5 flex flex-col items-center justify-between h-full space-y-2">
                 
-                {/* SVG High Precision QR Code Pattern */}
-                <svg viewBox="0 0 100 100" className="w-40 h-40 sm:w-44 sm:h-44">
-                  {/* Position detection patterns */}
-                  <rect x="0" y="0" width="30" height="30" fill="#0f172a" rx="4" />
-                  <rect x="5" y="5" width="20" height="20" fill="#ffffff" rx="2" />
-                  <rect x="10" y="10" width="10" height="10" fill="#1e40af" rx="1" />
-
-                  <rect x="70" y="0" width="30" height="30" fill="#0f172a" rx="4" />
-                  <rect x="75" y="5" width="20" height="20" fill="#ffffff" rx="2" />
-                  <rect x="80" y="10" width="10" height="10" fill="#1e40af" rx="1" />
-
-                  <rect x="0" y="70" width="30" height="30" fill="#0f172a" rx="4" />
-                  <rect x="5" y="75" width="20" height="20" fill="#ffffff" rx="2" />
-                  <rect x="10" y="80" width="10" height="10" fill="#1e40af" rx="1" />
-
-                  {/* QR Data Grid Simulation */}
-                  <path d="M 35 5 H 45 V 15 H 35 Z M 50 5 H 65 V 15 H 50 Z M 35 20 H 50 V 30 H 35 Z M 55 20 H 65 V 30 H 55 Z" fill="#1e293b" />
-                  <path d="M 5 35 H 15 V 45 H 5 Z M 20 35 H 30 V 45 H 20 Z M 35 35 H 45 V 45 H 35 Z M 50 35 H 60 V 45 H 50 Z M 65 35 H 95 V 45 H 65 Z" fill="#1e293b" />
-                  <path d="M 5 50 H 25 V 60 H 5 Z M 30 50 H 40 V 60 H 30 Z M 45 50 H 65 V 60 H 45 Z M 70 50 H 95 V 60 H 70 Z" fill="#1e293b" />
-                  <path d="M 5 65 H 30 V 68 H 5 Z M 35 65 H 55 V 68 H 35 Z M 60 65 H 95 V 68 H 60 Z" fill="#2563eb" />
-                  <path d="M 35 70 H 45 V 80 H 35 Z M 50 70 H 65 V 80 H 50 Z M 70 70 H 80 V 80 H 70 Z M 85 70 H 95 V 80 H 85 Z" fill="#1e293b" />
-                  <path d="M 35 85 H 50 V 95 H 35 Z M 55 85 H 70 V 95 H 55 Z M 75 85 H 95 V 95 H 75 Z" fill="#1e293b" />
-                  
-                  {/* Center SHOV Logo Pin */}
-                  <rect x="38" y="38" width="24" height="24" rx="4" fill="#0284c7" />
-                  <text x="50" y="54" fontSize="10" fontWeight="bold" fill="#ffffff" textAnchor="middle">SHOV</text>
-                </svg>
-
-                {/* Animated Scanner Laser Sweep */}
-                <div className="absolute inset-x-0 h-1 bg-sky-400 shadow-[0_0_8px_#38bdf8] animate-scan-laser pointer-events-none" />
-              </div>
-
-              <div className="mt-3">
-                <button
-                  onClick={handleCopyToken}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-mono font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+                {/* Campus Image Frame */}
+                <div 
+                  onClick={() => setIsCampusLightboxOpen(true)}
+                  className="w-full rounded-2xl overflow-hidden shadow-md border-2 border-slate-200 relative group cursor-pointer"
+                  title="Click to zoom AVS College Campus Photo"
                 >
-                  <span>Token: {student.qrSecureToken.slice(0, 16)}...</span>
-                  {copiedToken ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Share2 className="w-3 h-3 text-blue-400" />}
-                </button>
+                  <div className="absolute top-1 left-1.5 z-10 px-2 py-0.5 rounded-md bg-blue-950/80 backdrop-blur-xs text-white text-[8px] font-black uppercase">
+                    AVS Campus
+                  </div>
+                  <img
+                    src={avsCampusPhoto}
+                    alt="AVS College of Technology Campus"
+                    className="w-full h-24 sm:h-28 object-cover group-hover:scale-105 transition-transform"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[8px] font-bold gap-1 rounded-2xl">
+                    <Maximize2 className="w-3 h-3" />
+                    <span>Enlarge</span>
+                  </div>
+                </div>
+
+                {/* Biometric Sensor Icon Box */}
+                <div className="w-full py-2 px-3 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-white border border-blue-300 flex items-center justify-center text-blue-900 shadow-xs">
+                    <Fingerprint className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[9px] font-black text-blue-950 uppercase">RFID / NFC CHIP</p>
+                    <p className="text-[8px] text-slate-500 font-mono">ENCRYPTED TOKEN</p>
+                  </div>
+                </div>
+
               </div>
+
             </div>
 
-            {/* Back Footer & Lost ID button */}
-            <div className="space-y-2 border-t border-slate-800 pt-3">
-              <div className="text-[9px] text-slate-400 text-center leading-relaxed">
-                Property of Campus Security. If found, return to Central Gate Security.
-              </div>
-
-              {onReportLost && (
-                <button
-                  onClick={onReportLost}
-                  className="w-full py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Report Lost ID Card</span>
-                </button>
-              )}
+            {/* Back Bottom Blue Ribbon with Website */}
+            <div className="-mx-5 -mb-5 sm:-mx-6 sm:-mb-6 bg-blue-950 text-white py-2 px-4 flex items-center justify-between text-[10px] font-mono relative z-10">
+              <span className="flex items-center gap-1 text-slate-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>Authorized Identity Card</span>
+              </span>
+              <span className="text-sky-300 font-bold">www.avsct.edu.in</span>
             </div>
 
           </div>

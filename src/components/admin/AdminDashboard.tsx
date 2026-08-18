@@ -3,6 +3,7 @@ import { StudentManagement } from './StudentManagement';
 import { FineManagement } from './FineManagement';
 import { AuditLogsView } from './AuditLogsView';
 import { HodVpSection } from '../staff/HodVpSection';
+import { SupabaseEmailTemplates } from './SupabaseEmailTemplates';
 import { INITIAL_STUDENTS, INITIAL_FINES, INITIAL_AUDIT_LOGS } from '../../data/mockData';
 import { 
   Users, 
@@ -17,11 +18,12 @@ import {
   CheckCircle2,
   Clock,
   Terminal,
-  FileText
+  FileText,
+  Mail
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'OVERVIEW' | 'STUDENTS' | 'FINES' | 'AUDIT_LOGS' | 'HOD_VP'>('OVERVIEW');
+  const [activeSubTab, setActiveSubTab] = useState<'OVERVIEW' | 'STUDENTS' | 'FINES' | 'AUDIT_LOGS' | 'HOD_VP' | 'EMAIL_TEMPLATES'>('OVERVIEW');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
@@ -48,6 +50,18 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             System Overview
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('EMAIL_TEMPLATES')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === 'EMAIL_TEMPLATES'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Auth Email Templates</span>
           </button>
 
           <button
@@ -239,6 +253,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* SUB-TABS ROUTING */}
+      {activeSubTab === 'EMAIL_TEMPLATES' && <SupabaseEmailTemplates />}
       {activeSubTab === 'STUDENTS' && <StudentManagement />}
       {activeSubTab === 'FINES' && <FineManagement />}
       {activeSubTab === 'AUDIT_LOGS' && <AuditLogsView />}

@@ -31,6 +31,21 @@ export const FineManagement: React.FC = () => {
   const handleCreateFineSubmit = async () => {
     if (!amount || !reason) return;
 
+    const student = students.find(s => s.id === selectedStudentId);
+    const studentName = student?.name || 'Aarav Sharma';
+    const registerNumber = student?.registerNumber || '23CS001';
+
+    // Call Supabase service to persist to database
+    import('../../services/campusSupabaseService').then(async ({ createFineInSupabase }) => {
+      await createFineInSupabase({
+        studentName,
+        registerNumber,
+        amount: Number(amount),
+        reason,
+        dueDate
+      });
+    });
+
     const newFine = await createFineApi({
       studentId: selectedStudentId,
       amount: Number(amount),
@@ -41,13 +56,12 @@ export const FineManagement: React.FC = () => {
     if (newFine) {
       setFines(prev => [newFine, ...prev]);
     } else {
-      const student = students.find(s => s.id === selectedStudentId);
       const fallback: Fine = {
         id: `fn-${Date.now()}`,
         fineNumber: `FN-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         studentId: selectedStudentId,
-        studentName: student?.name || 'Aarav Sharma',
-        registerNumber: student?.registerNumber || '23CS001',
+        studentName,
+        registerNumber,
         amount: Number(amount),
         reason,
         dueDate,
@@ -58,7 +72,7 @@ export const FineManagement: React.FC = () => {
     }
 
     setShowAddFineModal(false);
-    addNotification('Fine Assessment Created', `Assigned ₹${amount} fine to student record.`, 'warning');
+    addNotification('Fine Assessment Created & Synced', `Assigned ₹${amount} fine to student record in Supabase.`, 'warning');
   };
 
   const handleWaiveFine = async (fineId: string) => {

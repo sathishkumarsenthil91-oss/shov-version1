@@ -84,12 +84,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check Supabase session on startup and listen to auth changes
   useEffect(() => {
+    const syncUserProfile = async (authUser: any) => {
+      const basicUser = mapSupabaseUserToAppUser(authUser);
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (profile) {
+          const enrichedUser: User = {
+            ...basicUser,
+            name: profile.name || basicUser.name,
+            role: (profile.role as UserRole) || basicUser.role,
+            departmentName: profile.department_name || basicUser.departmentName,
+            departmentId: profile.department_code || basicUser.departmentId,
+            designation: profile.designation || basicUser.designation,
+            studentId: profile.student_id || profile.register_number || basicUser.studentId,
+            phoneNumber: profile.phone_number || basicUser.phoneNumber,
+            avatarUrl: profile.avatar_url || basicUser.avatarUrl
+          };
+          setUser(enrichedUser);
+          setRole(enrichedUser.role);
+          localStorage.setItem('shov_auth_user', JSON.stringify(enrichedUser));
+          return;
+        }
+      } catch (e) {
+        console.warn('Profile fetch notice:', e);
+      }
+
+      setUser(basicUser);
+      setRole(basicUser.role);
+      localStorage.setItem('shov_auth_user', JSON.stringify(basicUser));
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const appUser = mapSupabaseUserToAppUser(session.user);
-        setUser(appUser);
-        setRole(appUser.role);
-        localStorage.setItem('shov_auth_user', JSON.stringify(appUser));
+        syncUserProfile(session.user);
       }
     }).catch(err => {
       console.warn('Supabase initial session recovery notice:', err);
@@ -97,10 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        const appUser = mapSupabaseUserToAppUser(session.user);
-        setUser(appUser);
-        setRole(appUser.role);
-        localStorage.setItem('shov_auth_user', JSON.stringify(appUser));
+        syncUserProfile(session.user);
       }
     });
 
@@ -178,11 +207,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
 
     if (result.success && result.user) {
-      setUser(result.user);
-      setRole(result.user.role);
-      localStorage.setItem('shov_auth_user', JSON.stringify(result.user));
-      addNotification('Account Registered', `Welcome to SHOV, ${result.user.name}! Your profile is active.`, 'success');
-      return { success: true, message: result.message };
+      // Do NOT auto-login. The user will be redirected to the Sign In page.
+      addNotification('Account Created', `Account successfully registered for ${result.user.email}. Please sign in.`, 'info');
+      return { success: true, message: result.message, user: result.user };
     }
 
     return { success: false, error: result.error || 'Failed to create account.' };
@@ -296,18 +323,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       matchedUser = {
         id: `u-${newRole.toLowerCase()}-${Date.now()}`,
         username: `${newRole.toLowerCase()}_user`,
-        name: newRole === 'ELECTION_COUNCIL' ? 'Aaradhya Saxena' :
+        name: newRole === 'PRINCIPAL' ? 'Dr. J. Davis' :
+              newRole === 'ELECTION_COUNCIL' ? 'Aaradhya Saxena' :
               newRole === 'VICE_PRINCIPAL' ? 'Dr. Elizabeth Montgomery' :
               newRole === 'HOD' ? 'Dr. Aris Thorne' :
               newRole === 'STAFF' ? 'Officer Marcus Vance' :
-              newRole === 'ADMIN' ? 'Robert Harrison' : 'Aarav Sharma',
-        email: `${newRole.toLowerCase()}@shov.college.edu`,
+              newRole === 'ADMIN' ? 'Robert Harrison' : 'Rohit Kumar',
+        email: `${newRole.toLowerCase()}@avsct.edu.in`,
         role: newRole,
-        designation: newRole === 'ELECTION_COUNCIL' ? '1 - Chairperson (Student Council)' :
+        designation: newRole === 'PRINCIPAL' ? 'Principal & Head of Institution' :
+                     newRole === 'ELECTION_COUNCIL' ? '1 - Chairperson (Student Council)' :
                      newRole === 'VICE_PRINCIPAL' ? 'Vice Principal & Academic Dean' :
                      newRole === 'HOD' ? 'Head of Department' :
                      newRole === 'STAFF' ? 'Security & Proctor Lead' :
-                     newRole === 'ADMIN' ? 'System Administrator' : 'B.Tech Student',
+                     newRole === 'ADMIN' ? 'System Administrator' : 'B.E. Student',
         councilMemberId: newRole === 'ELECTION_COUNCIL' ? (councilMemberId || 'em-1') : undefined,
         councilRole: newRole === 'ELECTION_COUNCIL' ? 'CHAIRPERSON' : undefined,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300'

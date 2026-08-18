@@ -108,13 +108,15 @@ export async function signUpWithSupabase(
     }
 
     if (data?.user) {
+      // If a session was automatically initiated by Supabase signUp, sign out immediately to enforce manual sign-in
+      if (data.session) {
+        await supabase.auth.signOut();
+      }
       const appUser = mapSupabaseUserToAppUser(data.user);
       return {
         success: true,
         user: appUser,
-        message: data.session 
-          ? 'Account created and signed in successfully!' 
-          : 'Account created! Please check your email to confirm your address or sign in directly.'
+        message: 'Account created successfully! Please enter your password to sign in.'
       };
     }
 

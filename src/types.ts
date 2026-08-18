@@ -1,10 +1,77 @@
-export type UserRole = 'STUDENT' | 'STAFF' | 'HOD' | 'VICE_PRINCIPAL' | 'ADMIN' | 'ELECTION_COUNCIL';
+export type UserRole = 'STUDENT' | 'STAFF' | 'HOD' | 'VICE_PRINCIPAL' | 'PRINCIPAL' | 'ADMIN' | 'ELECTION_COUNCIL';
 
 export type IDStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'BANNED' | 'EXPIRED';
 
 export type FineStatus = 'PENDING' | 'PAID' | 'WAIVED' | 'CANCELLED';
 
-export type DepartmentCode = 'IT' | 'CSE' | 'AIDS';
+export type DepartmentCode = 
+  | 'CSE' 
+  | 'IT' 
+  | 'AIDS' 
+  | 'ECE' 
+  | 'EEE' 
+  | 'MECH' 
+  | 'CIVIL' 
+  | 'BME' 
+  | 'CHEM' 
+  | 'AERO' 
+  | 'CSBS' 
+  | 'MBA' 
+  | 'MCA' 
+  | string;
+
+export interface DepartmentInfo {
+  code: string;
+  name: string;
+  shortName: string;
+  iconName?: string;
+}
+
+export type PhotoTransmissionRoute = 
+  | 'HOD_TO_ALL_STAFF'          // Rule: HOD sends photo -> goes to all staff sections
+  | 'VP_TO_HOD_ONLY'            // Rule: VP sends photo -> goes only to HOD section
+  | 'STAFF_TO_STAFF_THEN_HOD'   // Rule: Staff sends photo -> goes to all other staff & then to HOD section
+  | 'GENERAL_BROADCAST';
+
+export interface CampusCircular {
+  id: string;
+  circularNumber: string;
+  issuerRole: 'HOD' | 'VICE_PRINCIPAL' | 'PRINCIPAL';
+  issuerName: string;
+  issuerDesignation: string;
+  issuerAvatarUrl?: string;
+  departmentCode?: DepartmentCode;
+  departmentName?: string;
+  title: string;
+  summary: string;
+  content: string;
+  issuanceDate: string;
+  effectiveDate: string;
+  category: 'ACADEMIC' | 'DISCIPLINARY' | 'EXAMINATION' | 'GATE_SECURITY' | 'FACILITY' | 'POLICY' | 'EVENT';
+  targetAudience: 'ALL_STUDENTS' | 'ALL_FACULTY' | 'ALL_STAFF' | 'DEPT_SPECIFIC' | 'HODS_ONLY';
+  urgency: 'NORMAL' | 'URGENT' | 'HIGH_PRIORITY' | 'MANDATORY';
+  attachmentUrl?: string;
+  attachmentName?: string;
+  isAcknowledged?: boolean;
+  acknowledgementCount?: number;
+}
+
+export interface StaffHodMessage {
+  id: string;
+  senderStaffId: string;
+  senderStaffName: string;
+  senderRole: string;
+  targetDepartmentCode: DepartmentCode;
+  subject: string;
+  message: string;
+  studentRegisterNo?: string;
+  studentName?: string;
+  incidentType: 'GATE_ENTRY_FLAG' | 'UNAUTHORIZED_ABSENCE' | 'DISCIPLINE_ISSUE' | 'GATE_PASS_VERIFICATION' | 'GENERAL_INQUIRY';
+  timestamp: string;
+  status: 'PENDING_HOD_REVIEW' | 'REVIEWED' | 'ACTION_TAKEN';
+  hodReply?: string;
+  hodRepliedAt?: string;
+}
 
 export interface User {
   id: string;
@@ -42,6 +109,7 @@ export interface Student {
   address?: string;
   guardianPhone?: string;
   bloodGroup?: string;
+  dateOfBirth?: string;
 }
 
 export interface IDCard {
@@ -144,6 +212,8 @@ export interface HodVpPost {
   photoUrl?: string;
   attachmentName?: string;
   visibility: PhotoAudience;
+  transmissionRoute?: PhotoTransmissionRoute;
+  routedToSummary?: string;
   isConfidential?: boolean;
   likesCount: number;
   createdAt: string;
