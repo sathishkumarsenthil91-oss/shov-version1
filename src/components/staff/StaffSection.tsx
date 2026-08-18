@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { StaffScanner } from './StaffScanner';
 import { StaffHistory } from './StaffHistory';
 import { StaffHodCommunication } from './StaffHodCommunication';
-import { ShieldCheck, History, Scan, Building2, MessageSquare } from 'lucide-react';
+import { StaffDigitalIDCard } from './StaffDigitalIDCard';
+import { RoleLiveVerifiedBadge } from '../common/RoleLiveVerifiedBadge';
+import { ShieldCheck, History, Scan, Building2, UserCheck, QrCode } from 'lucide-react';
 
 export const StaffSection: React.FC = () => {
-  const [activeStaffTab, setActiveStaffTab] = useState<'scanner' | 'history' | 'communication'>('scanner');
+  const [activeStaffTab, setActiveStaffTab] = useState<'badge' | 'scanner' | 'history' | 'communication'>('badge');
 
   return (
     <div className="space-y-6">
@@ -16,9 +18,12 @@ export const StaffSection: React.FC = () => {
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-black uppercase tracking-wider font-mono">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>SECURITY & PROCTORIAL DESK • AVS COLLEGE OF TECHNOLOGY</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-black uppercase tracking-wider font-mono">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>SECURITY & PROCTORIAL DESK • AVS COLLEGE OF TECHNOLOGY</span>
+              </div>
+              <RoleLiveVerifiedBadge role="STAFF" size="sm" customLabel="LIVE VERIFIED STAFF" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
               Staff & Gate Security Portal
@@ -43,6 +48,18 @@ export const StaffSection: React.FC = () => {
 
       {/* Sub Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+        <button
+          onClick={() => setActiveStaffTab('badge')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+            activeStaffTab === 'badge'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
+          }`}
+        >
+          <QrCode className="w-3.5 h-3.5" />
+          <span>Staff Identity Badge</span>
+        </button>
+
         <button
           onClick={() => setActiveStaffTab('scanner')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
@@ -81,6 +98,12 @@ export const StaffSection: React.FC = () => {
       </div>
 
       {/* Tab Content */}
+      {activeStaffTab === 'badge' && (
+        <div className="py-2">
+          <StaffDigitalIDCard />
+        </div>
+      )}
+
       {activeStaffTab === 'scanner' && (
         <StaffScanner />
       )}

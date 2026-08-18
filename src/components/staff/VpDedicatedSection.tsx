@@ -5,6 +5,8 @@ import { ALL_COLLEGE_DEPARTMENTS } from '../../data/departmentsData';
 import { useAuth } from '../../context/AuthContext';
 import { LiveCameraCaptureModal } from '../common/LiveCameraCaptureModal';
 import { ImageLightbox } from '../common/ImageLightbox';
+import { VpDigitalIDCard } from './VpDigitalIDCard';
+import { RoleLiveVerifiedBadge } from '../common/RoleLiveVerifiedBadge';
 import { 
   fetchBroadcastPhotosFromSupabase, 
   createBroadcastPhotoInSupabase, 
@@ -27,11 +29,14 @@ import {
   FileCheck2, 
   Building2, 
   Scale,
-  RefreshCw
+  RefreshCw,
+  QrCode,
+  Radio
 } from 'lucide-react';
 
 export const VpDedicatedSection: React.FC = () => {
   const { user, role, addNotification } = useAuth();
+  const [activeTab, setActiveTab] = useState<'id-card' | 'directives'>('id-card');
   const [posts, setPosts] = useState<HodVpPost[]>(INITIAL_HOD_VP_POSTS);
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [showCameraModal, setShowCameraModal] = useState(false);
@@ -183,6 +188,43 @@ export const VpDedicatedSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Sub Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('id-card')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'id-card'
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
+          }`}
+        >
+          <QrCode className="w-3.5 h-3.5" />
+          <span>VP Executive Digital ID Card</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('directives')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'directives'
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5" />
+          <span>Executive Directives & Dispatch Feed</span>
+        </button>
+      </div>
+
+      {/* Tab 1: VP ID Card */}
+      {activeTab === 'id-card' && (
+        <div className="py-2">
+          <VpDigitalIDCard />
+        </div>
+      )}
+
+      {/* Tab 2: Directives Feed */}
+      {activeTab === 'directives' && (
+        <div className="space-y-6">
       {/* Protocol Banner */}
       <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/40 flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
@@ -281,6 +323,8 @@ export const VpDedicatedSection: React.FC = () => {
           </div>
         ))}
       </div>
+        </div>
+      )}
 
       {/* Modal: Dispatch Photo to HODs Only */}
       {showDispatchModal && (

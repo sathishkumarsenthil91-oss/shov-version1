@@ -9,23 +9,22 @@ import { StaffSection } from './components/staff/StaffSection';
 import { HodDedicatedSection } from './components/staff/HodDedicatedSection';
 import { VpDedicatedSection } from './components/staff/VpDedicatedSection';
 import { PrincipalDedicatedSection } from './components/principal/PrincipalDedicatedSection';
+import { InstitutionalGateway } from './components/auth/InstitutionalGateway';
 import { DepartmentPromptModal } from './components/common/DepartmentPromptModal';
-import { Department, UserRole } from './types';
+import { Department } from './types';
 import { 
-  ShieldCheck, 
-  UserCheck, 
   Building2, 
+  ShieldCheck, 
+  GraduationCap, 
   Crown, 
-  Landmark,
-  GraduationCap,
+  Landmark, 
   Sparkles,
-  Lock,
-  ArrowRight,
-  LogIn
+  Layers,
+  KeyRound
 } from 'lucide-react';
 
 function AppContent() {
-  const { user, role, switchRole, completeStudentOnboarding, createNewStaffAccount, addNotification } = useAuth();
+  const { user, role, isAuthenticated, completeStudentOnboarding, createNewStaffAccount, addNotification } = useAuth();
   
   const [loginModalMode, setLoginModalMode] = useState<'otp' | 'login' | 'signup' | 'council' | null>(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
@@ -40,162 +39,85 @@ function AppContent() {
     addNotification('Department Configured', `Active department updated to ${dept.name} (${dept.code}).`, 'success');
   };
 
-  const handleQuickRoleSwitch = (newRole: UserRole) => {
-    switchRole(newRole);
-    if (newRole === 'STUDENT') setActiveTab('student-id');
-    else if (newRole === 'STAFF') setActiveTab('staff-scanner');
-    else if (newRole === 'HOD') setActiveTab('hod-roster');
-    else if (newRole === 'VICE_PRINCIPAL') setActiveTab('vp-governance');
-    else if (newRole === 'PRINCIPAL') setActiveTab('principal-executive');
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 flex flex-col font-sans">
       
-      {/* Dynamic Top Navbar - Restricted strictly to active role */}
+      {/* Dynamic Top Navbar - Restricted strictly to the authenticated persona only */}
       <Header
-        onOpenLoginModal={(mode) => setLoginModalMode(mode || 'otp')}
+        onOpenLoginModal={(mode) => setLoginModalMode(mode || 'login')}
         onOpenOnboardingModal={() => setShowOnboardingModal(true)}
         activeTab={activeTab}
         setActiveTab={(t) => setActiveTab(t)}
       />
 
-      {/* Role Navigation Bar & Persona Switcher */}
-      <div className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 backdrop-blur-md sticky top-20 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between overflow-x-auto gap-4">
-          
-          {/* Active Role Indicator */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">
-              Active Portal:
-            </span>
+      {/* When Authenticated: Subtle Role Context Bar with NO other role tabs exposed */}
+      {isAuthenticated && user && (
+        <div className="bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-800 backdrop-blur-md sticky top-20 z-30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between overflow-x-auto gap-4">
+            
+            {/* Active User Institutional Context */}
+            <div className="flex items-center gap-2.5 text-xs">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+              <span className="font-bold text-slate-700 dark:text-slate-200">
+                {role === 'STUDENT' && `Student Session: ${user.name} • ${user.designation || 'B.E. Computer Science'}`}
+                {role === 'STAFF' && `Security & Proctor Desk: ${user.name} • Gate Turnstile 1`}
+                {role === 'HOD' && `Department Head: ${user.name} • ${user.departmentName || 'Computer Science & Engineering'}`}
+                {role === 'VICE_PRINCIPAL' && `Vice Principal: ${user.name} • Governance & Academic Affairs`}
+                {role === 'PRINCIPAL' && `Office of the Principal: ${user.name} • Institutional Command`}
+              </span>
+            </div>
 
-            {/* 1. Student */}
-            <button
-              onClick={() => handleQuickRoleSwitch('STUDENT')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                role === 'STUDENT'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Student</span>
-            </button>
+            {/* Right Context Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              {role === 'STUDENT' && (
+                <button
+                  onClick={() => setShowDepartmentPrompt(true)}
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 cursor-pointer"
+                >
+                  <Building2 className="w-3 h-3" />
+                  <span>{user.departmentId?.replace('dept-', '').toUpperCase() || 'CSE'}</span>
+                </button>
+              )}
 
-            {/* 2. Staff */}
-            <button
-              onClick={() => handleQuickRoleSwitch('STAFF')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                role === 'STAFF'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Staff</span>
-            </button>
+              <button
+                onClick={() => setLoginModalMode('login')}
+                className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition"
+                title="Switch Account or Login with Another Role"
+              >
+                <KeyRound className="w-3 h-3 text-slate-400" />
+                <span className="hidden sm:inline">Switch Account</span>
+              </button>
+            </div>
 
-            {/* 3. HOD */}
-            <button
-              onClick={() => handleQuickRoleSwitch('HOD')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                role === 'HOD'
-                  ? 'bg-sky-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>HOD</span>
-            </button>
-
-            {/* 4. Vice Principal */}
-            <button
-              onClick={() => handleQuickRoleSwitch('VICE_PRINCIPAL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                role === 'VICE_PRINCIPAL'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>Vice Principal</span>
-            </button>
-
-            {/* 5. Principal */}
-            <button
-              onClick={() => handleQuickRoleSwitch('PRINCIPAL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                role === 'PRINCIPAL'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Landmark className="w-3.5 h-3.5" />
-              <span>Principal</span>
-            </button>
           </div>
-
-          {/* Right Action: Role Login Portal Trigger */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setLoginModalMode('login')}
-              className="text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer"
-            >
-              <LogIn className="w-3.5 h-3.5 text-blue-500" />
-              <span>Role Login Sections</span>
-            </button>
-
-            <button
-              onClick={() => setShowDepartmentPrompt(true)}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 cursor-pointer"
-            >
-              <Building2 className="w-3 h-3" />
-              <span className="hidden sm:inline">Select Dept</span>
-            </button>
-          </div>
-
         </div>
-      </div>
+      )}
 
-      {/* Main Content Area - Strictly Rendered based on Logged-in Persona */}
+      {/* Main Content Area */}
       <main className="flex-1 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
           
-          {/* 1. Student Section */}
-          {role === 'STUDENT' && (
-            <StudentSection />
-          )}
-
-          {/* 2. Staff Section */}
-          {role === 'STAFF' && (
-            <StaffSection />
-          )}
-
-          {/* 3. HOD Section */}
-          {role === 'HOD' && (
-            <HodDedicatedSection />
-          )}
-
-          {/* 4. Vice Principal Section */}
-          {role === 'VICE_PRINCIPAL' && (
-            <VpDedicatedSection />
-          )}
-
-          {/* 5. Principal Section */}
-          {role === 'PRINCIPAL' && (
-            <PrincipalDedicatedSection />
-          )}
-
-          {/* Admin Fallback */}
-          {role === 'ADMIN' && (
-            <PrincipalDedicatedSection />
+          {/* If Logged In: Strictly render ONLY the active persona's workspace */}
+          {isAuthenticated && user ? (
+            <>
+              {role === 'STUDENT' && <StudentSection />}
+              {role === 'STAFF' && <StaffSection />}
+              {role === 'HOD' && <HodDedicatedSection />}
+              {role === 'VICE_PRINCIPAL' && <VpDedicatedSection />}
+              {role === 'PRINCIPAL' && <PrincipalDedicatedSection />}
+              {role === 'ADMIN' && <PrincipalDedicatedSection />}
+            </>
+          ) : (
+            /* If Logged Out: Show full institutional login gateway */
+            <InstitutionalGateway
+              onOpenOnboarding={() => setShowOnboardingModal(true)}
+            />
           )}
 
         </div>
       </main>
 
-      {/* Login / Sign Up Modal Popup */}
+      {/* Login Modal Popup */}
       <LoginModal
         isOpen={!!loginModalMode}
         initialMode={loginModalMode || 'login'}
@@ -206,7 +128,6 @@ function AppContent() {
         }}
         onOpenStaffCreate={() => setShowStaffCreateModal(true)}
         onOpenEmailTemplates={() => {
-          switchRole('PRINCIPAL');
           setActiveTab('principal-executive');
         }}
       />
@@ -239,17 +160,10 @@ function AppContent() {
       {/* Footer */}
       <footer className="border-t border-slate-200/80 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 AVS College of Technology • Role-Based Educational Institutional System</p>
-          <div className="flex items-center gap-4 text-[11px] font-semibold text-slate-400 flex-wrap justify-center">
-            <span>STUDENT</span>
-            <span>•</span>
-            <span>STAFF</span>
-            <span>•</span>
-            <span>HOD</span>
-            <span>•</span>
-            <span>VICE PRINCIPAL</span>
-            <span>•</span>
-            <span>PRINCIPAL</span>
+          <p>© 2026 AVS College of Technology • Secure Role-Isolated Educational Portal</p>
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Role-Based Data Isolation Active</span>
           </div>
         </div>
       </footer>

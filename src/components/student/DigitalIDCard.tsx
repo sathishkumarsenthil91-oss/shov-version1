@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Student } from '../../types';
 import { ImageLightbox } from '../common/ImageLightbox';
 import { LiveCameraCaptureModal } from '../common/LiveCameraCaptureModal';
+import { RoleLiveVerifiedBadge } from '../common/RoleLiveVerifiedBadge';
 import { motion } from 'motion/react';
 import { rohitKumarPhoto, avsCampusPhoto, INITIAL_STUDENTS } from '../../data/mockData';
 import { 
@@ -104,11 +105,7 @@ export const DigitalIDCard: React.FC<DigitalIDCardProps> = ({
       {/* Top Bar Controls */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-xs font-black text-slate-800 dark:text-slate-200 tracking-wider uppercase flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            AVS COLLEGE OF TECHNOLOGY — OFFICIAL DIGITAL ID
-          </span>
+          <RoleLiveVerifiedBadge role="STUDENT" size="sm" customLabel="STUDENT VERIFIED" />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -310,8 +307,8 @@ export const DigitalIDCard: React.FC<DigitalIDCardProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1.5 pt-0.5">
-                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider">STATUS</span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase shadow-xs">
+                  <RoleLiveVerifiedBadge role="STUDENT" size="sm" showLabel={false} />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500 text-white text-[10px] font-black uppercase shadow-xs">
                     <CheckCircle2 className="w-3 h-3" />
                     <span>{student.status || 'ACTIVE'}</span>
                   </span>

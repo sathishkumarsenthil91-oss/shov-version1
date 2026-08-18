@@ -7,9 +7,9 @@ import {
   signInWithSupabase, 
   signUpWithSupabase, 
   signOutFromSupabase, 
-  resetSupabasePassword,
-  sendSupabaseOtp,
-  verifySupabaseOtp,
+  resetSupabasePassword, 
+  sendSupabaseOtp, 
+  verifySupabaseOtp, 
   mapSupabaseUserToAppUser 
 } from '../services/supabase';
 
@@ -19,6 +19,23 @@ interface NotificationItem {
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
   time: string;
+}
+
+export interface RegisterMemberParams {
+  role: UserRole;
+  name: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  departmentCode?: DepartmentCode;
+  studentId?: string;
+  registerNumber?: string;
+  staffId?: string;
+  designation?: string;
+  year?: number;
+  course?: string;
+  avatarUrl?: string;
+  autoLogin?: boolean;
 }
 
 interface AuthContextType {
@@ -40,6 +57,7 @@ interface AuthContextType {
     designation?: string;
     phone?: string;
   }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  registerMember: (params: RegisterMemberParams) => Promise<{ success: boolean; message?: string; error?: string }>;
   sendPasswordReset: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   loginWithPhoneOrEmail: (phoneOrEmail: string) => Promise<{ success: boolean; testOtp?: string }>;
   verifyOtp: (identifier: string, otp: string, selectedRole?: UserRole, departmentCode?: DepartmentCode) => Promise<boolean>;
@@ -58,7 +76,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('shov_auth_user');
-    return saved ? JSON.parse(saved) : INITIAL_USERS[5]; // Default demo Student (Aarav - CSE)
+    return saved ? JSON.parse(saved) : INITIAL_USERS[5]; // Default demo Student (Rohit Kumar - CSE)
   });
 
   const [role, setRole] = useState<UserRole>(() => {
@@ -67,14 +85,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const savedDark = localStorage.getItem('shov_dark_mode');
-    return savedDark !== null ? JSON.parse(savedDark) : false; // Clean White and Blue primary theme
+    return savedDark !== null ? JSON.parse(savedDark) : false;
   });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: 'notif-1',
-      title: 'SHOV Identity & Supabase Auth Active',
-      message: 'Supabase email auth connected (backend-shov). Log in or register anytime!',
+      title: 'Institutional System Online',
+      message: 'AVS College of Technology Multi-Role Security & Identity System is active.',
       type: 'info',
       time: 'Just now'
     }
@@ -119,33 +137,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('shov_auth_user', JSON.stringify(basicUser));
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncUserProfile(session.user);
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+          syncUserProfile(data.session.user);
+        }
+      } catch (e) {
+        console.warn('Session check notice:', e);
       }
-    }).catch(err => {
-      console.warn('Supabase initial session recovery notice:', err);
-    });
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    checkSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         syncUserProfile(session.user);
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
-  // Synchronize dark mode class on html document
+  // Sync dark mode class with HTML document element
   useEffect(() => {
-    localStorage.setItem('shov_dark_mode', JSON.stringify(darkMode));
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('shov_dark_mode', JSON.stringify(darkMode));
   }, [darkMode]);
 
   const toggleDarkMode = () => {
@@ -153,21 +176,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addNotification = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
-    const item: NotificationItem = {
-      id: `notif-${Date.now()}`,
+    const newNotif: NotificationItem = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       title,
       message,
       type,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: 'Just now'
     };
-    setNotifications(prev => [item, ...prev]);
+    setNotifications(prev => [newNotif, ...prev.slice(0, 19)]);
   };
 
   const removeNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  // 1. SUPABASE EMAIL & PASSWORD SIGN IN
+  // 1. SUPABASE EMAIL & PASSWORD LOGIN
   const loginWithSupabaseEmail = async (email: string, password: string) => {
     setIsLoading(true);
     const result = await signInWithSupabase(email, password);
@@ -177,7 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(result.user);
       setRole(result.user.role);
       localStorage.setItem('shov_auth_user', JSON.stringify(result.user));
-      addNotification('Welcome Back', `Successfully signed in as ${result.user.name} (${result.user.email})`, 'success');
+      addNotification('Welcome Back', `Successfully signed in as ${result.user.name} (${result.user.role})`, 'success');
       return { success: true };
     }
 
@@ -207,7 +230,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
 
     if (result.success && result.user) {
-      // Do NOT auto-login. The user will be redirected to the Sign In page.
       addNotification('Account Created', `Account successfully registered for ${result.user.email}. Please sign in.`, 'info');
       return { success: true, message: result.message, user: result.user };
     }
@@ -215,7 +237,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: false, error: result.error || 'Failed to create account.' };
   };
 
-  // 3. SUPABASE PASSWORD RESET
+  // 3. UNIVERSAL MEMBER REGISTRATION WITH IMMEDIATE ROLE ACTIVATION
+  const registerMember = async (params: RegisterMemberParams) => {
+    setIsLoading(true);
+    try {
+      // Build user object
+      const deptCode = params.departmentCode || 'CSE';
+      const deptName = deptCode === 'CSE' ? 'Computer Science & Engineering' :
+                        deptCode === 'IT' ? 'Information Technology' :
+                        deptCode === 'AIDS' ? 'Artificial Intelligence & Data Science' :
+                        deptCode === 'ECE' ? 'Electronics & Communication' :
+                        deptCode === 'EEE' ? 'Electrical & Electronics' :
+                        deptCode === 'MECH' ? 'Mechanical Engineering' : 'General Engineering';
+
+      const defaultDesignation = 
+        params.role === 'STUDENT' ? `B.E. ${deptName} - Year ${params.year || 3}` :
+        params.role === 'STAFF' ? (params.designation || 'Staff & Security Proctor') :
+        params.role === 'HOD' ? `Head of Department (${deptCode})` :
+        params.role === 'VICE_PRINCIPAL' ? 'Vice Principal & Academic Dean' :
+        params.role === 'PRINCIPAL' ? 'Principal & Head of Institution' : 'Administrator';
+
+      const newUser: User = {
+        id: `u-${params.role.toLowerCase()}-${Date.now()}`,
+        username: (params.registerNumber || params.studentId || params.staffId || params.email.split('@')[0] || `user_${Date.now()}`).toLowerCase(),
+        name: params.name,
+        email: params.email,
+        phoneNumber: params.phone || '+91 98765 00000',
+        role: params.role,
+        studentId: params.studentId || params.registerNumber,
+        departmentId: `dept-${deptCode.toLowerCase()}`,
+        departmentName: deptName,
+        designation: params.designation || defaultDesignation,
+        avatarUrl: params.avatarUrl || (params.role === 'STUDENT' ? '/images/rohit_kumar_id_photo_1787039178779.jpg' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300')
+      };
+
+      // Try registering in Supabase in background if credentials given
+      if (params.password) {
+        try {
+          signUpWithSupabase(params.email, params.password, {
+            name: params.name,
+            role: params.role,
+            departmentCode: deptCode,
+            studentId: params.studentId || params.registerNumber,
+            designation: newUser.designation,
+            phone: params.phone
+          }).catch(err => console.warn('Supabase background register notice:', err));
+        } catch {
+          // ignore
+        }
+      }
+
+      // Auto login
+      setUser(newUser);
+      setRole(params.role);
+      localStorage.setItem('shov_auth_user', JSON.stringify(newUser));
+      setIsLoading(false);
+
+      addNotification(
+        'Member Registered Successfully',
+        `Welcome to AVS College, ${params.name}! Logged in as ${params.role.replace(/_/g, ' ')}.`,
+        'success'
+      );
+
+      return { success: true, message: `Account created for ${params.name}` };
+    } catch (e: any) {
+      setIsLoading(false);
+      return { success: false, error: e?.message || 'Registration failed' };
+    }
+  };
+
+  // 4. SUPABASE PASSWORD RESET
   const sendPasswordReset = async (email: string) => {
     return await resetSupabasePassword(email);
   };
@@ -244,7 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(res.user.role);
         localStorage.setItem('shov_auth_user', JSON.stringify(res.user));
         setIsLoading(false);
-        addNotification('OTP Authentication Successful', `Welcome to SHOV, ${res.user.name}! (${res.user.role})`, 'success');
+        addNotification('OTP Authentication Successful', `Welcome to AVS College, ${res.user.name}! (${res.user.role})`, 'success');
         return true;
       }
     } catch (e) {
@@ -339,14 +430,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                      newRole === 'ADMIN' ? 'System Administrator' : 'B.E. Student',
         councilMemberId: newRole === 'ELECTION_COUNCIL' ? (councilMemberId || 'em-1') : undefined,
         councilRole: newRole === 'ELECTION_COUNCIL' ? 'CHAIRPERSON' : undefined,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300'
+        avatarUrl: newRole === 'STUDENT' ? '/images/rohit_kumar_id_photo_1787039178779.jpg' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300'
       };
     }
 
     setUser(matchedUser);
     setRole(newRole);
     localStorage.setItem('shov_auth_user', JSON.stringify(matchedUser));
-    addNotification('Role Switched', `Active Session: ${matchedUser.name} • ${matchedUser.designation || newRole}`, 'info');
+    addNotification('Logged In', `Active Session: ${matchedUser.name} • ${matchedUser.designation || newRole}`, 'info');
   };
 
   const switchCouncilMember = (memberId: string) => {
@@ -363,7 +454,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await signOutFromSupabase();
     setUser(null);
     localStorage.removeItem('shov_auth_user');
-    addNotification('Signed Out', 'You have been safely signed out of SHOV.', 'info');
+    addNotification('Signed Out', 'You have been safely signed out of AVS College Portal.', 'info');
   };
 
   return (
@@ -378,6 +469,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toggleDarkMode,
         loginWithSupabaseEmail,
         signUpWithSupabaseEmail,
+        registerMember,
         sendPasswordReset,
         loginWithPhoneOrEmail,
         verifyOtp,

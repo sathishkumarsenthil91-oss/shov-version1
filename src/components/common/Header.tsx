@@ -18,7 +18,6 @@ import {
   Building2, 
   Landmark, 
   LogIn, 
-  UserPlus,
   QrCode,
   GraduationCap,
   CreditCard,
@@ -27,7 +26,7 @@ import {
   History,
   Send,
   Award,
-  Layers
+  KeyRound
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -40,7 +39,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ 
   onOpenLoginModal, 
   onOpenOnboardingModal,
-  activeTab = 'student', 
+  activeTab = 'student-id', 
   setActiveTab 
 }) => {
   const { 
@@ -49,7 +48,6 @@ export const Header: React.FC<HeaderProps> = ({
     isAuthenticated, 
     darkMode, 
     toggleDarkMode, 
-    switchRole, 
     logout, 
     notifications,
     removeNotification 
@@ -57,7 +55,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showRoleSwitcherDropdown, setShowRoleSwitcherDropdown] = useState(false);
 
   const roleConfigs: Record<UserRole, { label: string; badgeColor: string; icon: React.ReactNode }> = {
     STUDENT: { 
@@ -97,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
     },
   };
 
-  // Render role-scoped navigation links strictly filtered by logged-in role
+  // Render navigation links STRICTLY restricted to the logged-in role only
   const renderRoleNavigationLinks = () => {
     switch (role) {
       case 'STUDENT':
@@ -320,112 +317,43 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const handleSwitchPersona = (newRole: UserRole) => {
-    switchRole(newRole);
-    setShowRoleSwitcherDropdown(false);
-    if (newRole === 'STUDENT') setActiveTab?.('student-id');
-    else if (newRole === 'STAFF') setActiveTab?.('staff-scanner');
-    else if (newRole === 'HOD') setActiveTab?.('hod-roster');
-    else if (newRole === 'VICE_PRINCIPAL') setActiveTab?.('vp-governance');
-    else if (newRole === 'PRINCIPAL') setActiveTab?.('principal-executive');
-  };
-
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
         
-        {/* Zone 1: Branding Logo */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center cursor-pointer" onClick={() => handleSwitchPersona(role)}>
+        {/* Zone 1: Branding & Institution */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center">
             <ShovLogo size="sm" showTagline={false} lightText={darkMode} />
           </div>
-          <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-blue-600/10 text-blue-700 dark:text-blue-400 border border-blue-600/20 font-mono whitespace-nowrap">
-            AVS COLLEGE OF TECHNOLOGY
-          </span>
-        </div>
-
-        {/* Zone 2: Dynamic Role Navigation Links - strictly limited to logged-in persona */}
-        <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-          {renderRoleNavigationLinks()}
-        </nav>
-
-        {/* Zone 3: Actions - Role Switcher, Dark Mode, Notifications & Profile */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          
-          {/* Quick Role Switcher Pill */}
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleSwitcherDropdown(!showRoleSwitcherDropdown)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-black text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shadow-xs"
-              title="Switch Active Persona"
-            >
-              {roleConfigs[role]?.icon}
-              <span className="hidden md:inline">{roleConfigs[role]?.label || role}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {showRoleSwitcherDropdown && (
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in">
-                <div className="px-2.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
-                  Switch Active Persona
-                </div>
-
-                <div className="p-1 space-y-1">
-                  <button
-                    onClick={() => handleSwitchPersona('STUDENT')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                      role === 'STUDENT' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Student Portal</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchPersona('STAFF')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                      role === 'STAFF' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Staff & Security</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchPersona('HOD')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                      role === 'HOD' ? 'bg-sky-50 dark:bg-sky-950 text-sky-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-sky-500" />
-                    <span>Head of Dept (HOD)</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchPersona('VICE_PRINCIPAL')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                      role === 'VICE_PRINCIPAL' ? 'bg-purple-50 dark:bg-purple-950 text-purple-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Crown className="w-3.5 h-3.5 text-purple-500" />
-                    <span>Vice Principal</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSwitchPersona('PRINCIPAL')}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
-                      role === 'PRINCIPAL' ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Landmark className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>Principal</span>
-                  </button>
-                </div>
-              </div>
+          <div className="hidden sm:flex flex-col">
+            <span className="text-[11px] font-black tracking-wider uppercase text-slate-900 dark:text-white font-mono leading-tight whitespace-nowrap">
+              AVS COLLEGE OF TECHNOLOGY
+            </span>
+            {isAuthenticated && (
+              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                {roleConfigs[role]?.icon}
+                <span>{roleConfigs[role]?.label}</span>
+              </span>
             )}
           </div>
+        </div>
 
-          {/* Dark Mode Switcher */}
+        {/* Zone 2: Navigation Links — Strictly for the authenticated role only */}
+        {isAuthenticated ? (
+          <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+            {renderRoleNavigationLinks()}
+          </nav>
+        ) : (
+          <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <span>Official Institutional Portal</span>
+          </div>
+        )}
+
+        {/* Zone 3: Actions — Dark Mode, Notifications & Role Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          
+          {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
             title={darkMode ? "Switch to Clean White Mode" : "Switch to Dark Mode"}
@@ -505,7 +433,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="hidden md:block text-left">
                   <p className="text-xs font-bold text-slate-900 dark:text-white leading-none">{user.name}</p>
                   <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1">
-                    <span>{role}</span>
+                    <span>{roleConfigs[role]?.label || role}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   </p>
                 </div>
@@ -513,81 +441,54 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {showProfileMenu && (
-                <div className="absolute right-0 mt-3 w-68 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 mt-3 w-72 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">{user.name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                    <p className="text-xs font-black text-slate-900 dark:text-white">{user.name}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-mono">{user.email}</p>
                     <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                        {role}
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        {roleConfigs[role]?.label || role}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-emerald-600 bg-emerald-500/10 border border-emerald-500/20">
-                        AVS College
-                      </span>
+                      {user.departmentName && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          {user.departmentName}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Switch Role Direct Buttons */}
-                  <div className="p-2 border-b border-slate-100 dark:border-slate-800 space-y-1">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Switch Active View</p>
-                    <button
-                      onClick={() => handleSwitchPersona('STUDENT')}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                    >
-                      <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Student View</span>
-                    </button>
-                    <button
-                      onClick={() => handleSwitchPersona('STAFF')}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Staff & Security</span>
-                    </button>
-                    <button
-                      onClick={() => handleSwitchPersona('HOD')}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Building2 className="w-3.5 h-3.5 text-sky-500" />
-                      <span>HOD Portal</span>
-                    </button>
-                    <button
-                      onClick={() => handleSwitchPersona('VICE_PRINCIPAL')}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Crown className="w-3.5 h-3.5 text-purple-500" />
-                      <span>Vice Principal</span>
-                    </button>
-                    <button
-                      onClick={() => handleSwitchPersona('PRINCIPAL')}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Landmark className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Principal Desk</span>
-                    </button>
-                  </div>
-
-                  {/* Switch to Dedicated Multi-Role Login Modal */}
-                  <div className="p-2 border-b border-slate-100 dark:border-slate-800 space-y-1">
+                  {/* Switch Account & Register Options */}
+                  <div className="p-1 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);
                         onOpenLoginModal?.('login');
                       }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer transition"
                     >
-                      <LogIn className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Open Role Login Portal</span>
+                      <KeyRound className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Switch Role / Sign In</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        onOpenLoginModal?.('signup');
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer transition"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      <span>Register New Member</span>
                     </button>
                   </div>
 
+                  {/* Sign Out Button */}
                   <div className="pt-1">
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Sign Out</span>
@@ -600,10 +501,17 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onOpenLoginModal?.('login')}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Role Login</span>
+                <LogIn className="w-4 h-4 text-blue-600" />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => onOpenLoginModal?.('signup')}
+                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>New Register</span>
               </button>
             </div>
           )}

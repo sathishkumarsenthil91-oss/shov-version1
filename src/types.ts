@@ -96,20 +96,25 @@ export interface Student {
   name: string;
   photoUrl: string;
   physicalIdCardUrl?: string;
-  departmentId: string;
+  departmentId?: string;
   departmentName: string;
+  department?: string;
+  departmentCode?: string;
   course: string;
   year: number;
   collegeEmail: string;
   phoneNumber: string;
   status: IDStatus;
   validUntil: string;
-  issuedAt: string;
-  qrSecureToken: string;
+  validityYear?: string;
+  issuedAt?: string;
+  qrSecureToken?: string;
   address?: string;
   guardianPhone?: string;
+  emergencyContact?: string;
   bloodGroup?: string;
   dateOfBirth?: string;
+  fines?: Fine[];
 }
 
 export interface IDCard {
